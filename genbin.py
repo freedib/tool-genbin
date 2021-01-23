@@ -187,29 +187,29 @@ def combine_bin(section_name,dest_filename,use_section_offset_addr,need_chk):
         start_offset_addr = 0
     data_len = len(data_bin)
     if need_chk:
-        tmp_len = (data_len + 3) & (~3)
+        section_len = (data_len + 3) & (~3)
     else:
-        tmp_len = (data_len + 15) & (~15)
-    header = struct.pack('<II',start_offset_addr,tmp_len)
+        section_len = (data_len + 15) & (~15)
+    header = struct.pack('<II',start_offset_addr,section_len)
     write_file(dest_filename,header)
     # print(('add header(%s) = %s (0x%s), %s (0x%s)')%(len(header), 
-    #     start_offset_addr, hex(start_offset_addr), tmp_len, hex(tmp_len)))
+    #     start_offset_addr, hex(start_offset_addr), section_len, hex(section_len)))
 
     write_file(dest_filename,data_bin)
-    # print(('add %s, size %s (0x%s)')%(section_name,data_len,data_len))
 
     if need_chk:
         for loop in range(len(data_bin)):
             chk_sum ^= ord(chr(data_bin[loop]))
-            # print '%s size is %d(0x%x),align 4 bytes,\nultimate size is %d(0x%x)'%(filename,data_len,data_len,tmp_len,tmp_len)
-    tmp_len = tmp_len - data_len
-    if tmp_len:         # padding
-        padding = [0]*tmp_len
+    padding_len = section_len - data_len
+    if padding_len:         # padding
+        padding = [0]*padding_len
         write_file(dest_filename,bytes(padding))
         # print(('add padding(%s)')%(len(bytes(padding))))
         if need_chk:
             for loop in range(len(padding)):
                 chk_sum ^= ord(chr(padding[loop]))
+    print ('genbin.py: add section %s, size is %d, chk_sum=0x%s' %
+        (section_name, section_len, hex(chk_sum)))
 
 # compute the crc for the generated file
 def getFileCRC(_path): 
@@ -343,8 +343,8 @@ def main():
     if len(sys.argv)==8 and user_app=='0':
         flash_filename = sys.argv[6]        # eagle.flash.bin
         iron_filename = sys.argv[7]         # eagle.irom0text.bin
-        print(("genbin.py: create %s and %s from %s") %
-              (flash_filename, iron_filename, elf_filename))
+        print(("genbin.py: %s --> create %s + %s") %
+              (elf_filename, flash_filename, iron_filename))
 
         gen_appbin (0, flash_mode, flash_clk_div, flash_size_map, flash_filename, iron_filename)
         
