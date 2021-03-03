@@ -300,13 +300,18 @@ def gen_appbin (user_bin, flash_mode, flash_clk_div, flash_size_map, flash_filen
  
     if user_bin:
         all_bin_crc = getFileCRC(flash_filename)
-        # print (str(all_bin_crc))
-        if all_bin_crc < 0:
-            all_bin_crc = abs(all_bin_crc) - 1
-        else :
-            all_bin_crc = abs(all_bin_crc) + 1
+        print ('genbin.py: crc32 before inversion = %s, %d' % (hex(all_bin_crc), all_bin_crc))
         if sys.version_info.major >= 3:
-            all_bin_crc = 0x100000000 - all_bin_crc     # crc is unsigned in python3
+            if all_bin_crc > 0x80000000:
+                all_bin_crc = 0x100000000 - all_bin_crc - 1
+            else:
+                all_bin_crc = all_bin_crc + 1
+        else:
+            if all_bin_crc < 0:
+                all_bin_crc = abs(all_bin_crc) - 1
+            else :
+                all_bin_crc = abs(all_bin_crc) + 1
+        print ('genbin.py: crc32 after inversion = %s, %d' % (hex(all_bin_crc), all_bin_crc))
             
         # print (hex(all_bin_crc))
         bytes_all_bin_crc = struct.pack('<I',all_bin_crc)
